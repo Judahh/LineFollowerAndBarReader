@@ -66,21 +66,21 @@
           Serial.println("LED ON!!!");
           led=true;
           digitalWrite(LED_BUILTIN, led);
-        break;
+      break;
 
       case 0b00000010:
           Serial.println("LED OFF!!!");
           led=false;
           digitalWrite(LED_BUILTIN, led);
-        break;
+      break;
         
-      case 0b10000011:
+      case 0b00000011:
           Serial.println("LED SWITCH!!!");
           led=!led;
           digitalWrite(LED_BUILTIN, led);
-        break;
+      break;
 
-      case 0b10000100:
+      case 0b00000100:
           Serial.println("IF TURN!!!");
           if(led){
             motor.runForwardRight();
@@ -88,51 +88,53 @@
             motor.runForwardLeft();
           }
           delay(1000/10);  //delay de 1/10 de segundo
-        break;
+      break;
         
-      case 0b10000101:
+      case 0b00000101:
           Serial.println("Delay 0.5s!!!");
           delay(1000/2);
-        break;
+      break;
         
-      case 0b10000110:
+      case 0b00000110:
           Serial.println("Delay 1s!!!");
           delay(1000);
-        break;
+      break;
         
-      case 0b10000111:
+      case 0b00000111:
           Serial.println("Delay 10s!!!");
           delay(10000);
-        break;
-      case 0b10001000:
+      break;
+      
+      case 0b00001000:
           Serial.println("Turn Left!!!");
           motor.turnLeft();
           delay(1000/10);
-        break;
+      break;
         
-      case 0b10001001:
+      case 0b00001001:
           Serial.println("Turn Right!!!");
           motor.turnRight();
           delay(1000/10);
-        break;
+      break;
         
-      case 0b10001010:
+      case 0b00001010:
           Serial.println("Run Forward!!!");
           motor.runForward();
           delay(1000/5);
-        break;
+      break;
 
-      case 0b10001011:
+      case 0b00001011:
           Serial.println("brake!!!");
           motor.brake();
           delay(1000/5);
-        break;
+      break;
         
-      case 0b10001100:
+      case 0b00001100:
           Serial.println("Run Backwards!!!");
           motor.runBackwards();
           delay(1000/5);
-        break;
+      break;
+        
       default: 
       break;
     }
