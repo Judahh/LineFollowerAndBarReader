@@ -80,7 +80,7 @@
         break;
       default:
 
-      case 0b10000011:
+      case 0b10000100:
           Serial.println("IF TURN!!!");
           if(led){
             motor.runForwardRight();
@@ -88,6 +88,14 @@
             motor.runForwardLeft();
           }
           delay(1000/10);  //delay de 1/10 de segundo
+        break;
+      case 0b10000101:
+          Serial.println("Delay 0.5s!!!");
+          delay(1000/2);
+        break;
+      case 0b10000110:
+          Serial.println("Delay 1s!!!");
+          delay(1000);
         break;
       default: 
       break;
