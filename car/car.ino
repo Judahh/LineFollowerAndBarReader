@@ -60,8 +60,8 @@
           led=true;
           finish = true;
           digitalWrite(LED_BUILTIN, HIGH);
-          
         break;
+        
       case 0b00000001:
           Serial.println("LED ON!!!");
           led=true;
@@ -73,12 +73,12 @@
           led=false;
           digitalWrite(LED_BUILTIN, led);
         break;
+        
       case 0b10000011:
           Serial.println("LED SWITCH!!!");
           led=!led;
           digitalWrite(LED_BUILTIN, led);
         break;
-      default:
 
       case 0b10000100:
           Serial.println("IF TURN!!!");
@@ -89,13 +89,49 @@
           }
           delay(1000/10);  //delay de 1/10 de segundo
         break;
+        
       case 0b10000101:
           Serial.println("Delay 0.5s!!!");
           delay(1000/2);
         break;
+        
       case 0b10000110:
           Serial.println("Delay 1s!!!");
           delay(1000);
+        break;
+        
+      case 0b10000111:
+          Serial.println("Delay 10s!!!");
+          delay(10000);
+        break;
+      case 0b10001000:
+          Serial.println("Turn Left!!!");
+          motor.turnLeft();
+          delay(1000/10);
+        break;
+        
+      case 0b10001001:
+          Serial.println("Turn Right!!!");
+          motor.turnRight();
+          delay(1000/10);
+        break;
+        
+      case 0b10001010:
+          Serial.println("Run Forward!!!");
+          motor.runForward();
+          delay(1000/5);
+        break;
+
+      case 0b10001011:
+          Serial.println("brake!!!");
+          motor.brake();
+          delay(1000/5);
+        break;
+        
+      case 0b10001100:
+          Serial.println("Run Backwards!!!");
+          motor.runBackwards();
+          delay(1000/5);
         break;
       default: 
       break;
