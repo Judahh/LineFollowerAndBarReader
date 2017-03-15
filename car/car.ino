@@ -9,7 +9,8 @@ int const motorPositiveRightPin = 11;
 int const motorNegativeRightPin = 5;
 int const intensityPercentage = 40;
 int const intensityMax = 255;
-Motor motor(motorNegativeLeftPin, motorPositiveLeftPin, motorPositiveRightPin, motorNegativeRightPin, (intensityPercentage / 100)*intensityMax);
+int const percentageMax = 100;
+Motor motor(motorNegativeLeftPin, motorPositiveLeftPin, motorPositiveRightPin, motorNegativeRightPin, (intensityPercentage / percentageMax)*intensityMax);
 
 int const leftSensorPin = 6;
 int const centerSensorPin = 7;
