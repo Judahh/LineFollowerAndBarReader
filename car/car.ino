@@ -28,7 +28,7 @@ int const leftSensorPin = 6;
 int const centerSensorPin = 7;
 int const rightSensorPin = 8;
 
-int const serialBaudRate = 115200;
+int const serialBaudRate = 9600;
 
 int const numberOfSamples = 10;
 int const sampleDelay = 100;
@@ -330,7 +330,7 @@ void loop() {
 //    } else {
 //      motor.turnRight();
 //    }
-    motor.turnRight(255);
+    motor.turnRight(intensityR);
   }
 
   if (!goRight && goLeft && !error) {
