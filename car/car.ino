@@ -3,25 +3,35 @@
 #include <math.h>
 
 //Definicoes pinos Arduino ligados a entrada da Ponte H
-int const motorNegativeLeftPin = 9;
-int const motorPositiveLeftPin = 10;
-int const motorPositiveRightPin = 11;
-int const motorNegativeRightPin = 5;
-int const intensityPercentage = 40;
-int const intensityMax = 255;
-int const percentageMax = 100;
-Motor motor(motorNegativeLeftPin, motorPositiveLeftPin, motorPositiveRightPin, motorNegativeRightPin, (intensityPercentage / percentageMax)*intensityMax);
+int const motorNegativeLeftPin = 2;
+int const motorPositiveLeftPin = 3;
+int const motorPositiveRightPin = 5;
+int const motorNegativeRightPin = 4;
+int const motorSpeedRightPin = 10;
+int const motorSpeedLeftPin = 9;
+
+float intensityPercentage = 50;
+int percentageMax = 100;
+int intensityMax = 255;
+
+float intensityP = intensityPercentage / percentageMax;
+byte intensity = intensityP * intensityMax;
+
+Motor motor(motorNegativeLeftPin, motorPositiveLeftPin, motorPositiveRightPin, motorNegativeRightPin, motorSpeedRightPin, motorSpeedLeftPin, intensity);
 
 int const leftSensorPin = 6;
 int const centerSensorPin = 7;
 int const rightSensorPin = 8;
 
-int const serialBaudRate = 9600;
+int const serialBaudRate = 115200;
 
 int const numberOfSamples = 10;
 int const sampleDelay = 100;
 
-int centerSensorLastValue = -1;
+bool bitValue = false;
+bool bitLastValue = false;
+bool bitFirstValue = true;
+
 
 int leftSensorValue = 0;
 int centerSensorValue = 0;
@@ -33,6 +43,7 @@ int rightOffset = 0;
 
 bool goLeft = false;
 bool goRight = false;
+bool ok = false;
 
 bool warning = false;
 bool error = false;
@@ -47,7 +58,7 @@ unsigned long bitTime = 0;
 unsigned long currentCounter = 0;
 unsigned long counter = 0;
 
-int bitPosition = 0;
+int bitPosition = -1;
 
 QueueArray <byte> queue;
 byte byteReceived = 0;
@@ -56,7 +67,7 @@ void executeCommand(byte command) {
   Serial.print("Command:");
   Serial.println(command);
   switch (command) {
-    case 0b00000000:
+    case 0b10000000:
       Serial.println("DEAD!!!");
       //END
       motor.brake();
@@ -65,25 +76,25 @@ void executeCommand(byte command) {
       digitalWrite(LED_BUILTIN, HIGH);
       break;
 
-    case 0b00000001:
+    case 0b10000001:
       Serial.println("LED ON!!!");
       led = true;
       digitalWrite(LED_BUILTIN, led);
       break;
 
-    case 0b00000010:
+    case 0b10000010:
       Serial.println("LED OFF!!!");
       led = false;
       digitalWrite(LED_BUILTIN, led);
       break;
 
-    case 0b00000011:
+    case 0b10000011:
       Serial.println("LED SWITCH!!!");
       led = !led;
       digitalWrite(LED_BUILTIN, led);
       break;
 
-    case 0b00000100:
+    case 0b10000100:
       Serial.println("IF TURN!!!");
       if (led) {
         motor.runForwardRight();
@@ -93,46 +104,46 @@ void executeCommand(byte command) {
       delay(1000 / 10); //delay de 1/10 de segundo
       break;
 
-    case 0b00000101:
+    case 0b10000101:
       Serial.println("Delay 0.5s!!!");
       delay(1000 / 2);
       break;
 
-    case 0b00000110:
+    case 0b10000110:
       Serial.println("Delay 1s!!!");
       delay(1000);
       break;
 
-    case 0b00000111:
+    case 0b10000111:
       Serial.println("Delay 10s!!!");
       delay(10000);
       break;
 
-    case 0b00001000:
+    case 0b10001000:
       Serial.println("Turn Left!!!");
       motor.turnLeft();
       delay(1000 / 10);
       break;
 
-    case 0b00001001:
+    case 0b10001001:
       Serial.println("Turn Right!!!");
       motor.turnRight();
       delay(1000 / 10);
       break;
 
-    case 0b00001010:
+    case 0b10001010:
       Serial.println("Run Forward!!!");
       motor.runForward();
       delay(1000 / 5);
       break;
 
-    case 0b00001011:
+    case 0b10001011:
       Serial.println("brake!!!");
       motor.brake();
       delay(1000 / 5);
       break;
 
-    case 0b00001100:
+    case 0b10001100:
       Serial.println("Run Backwards!!!");
       motor.runBackwards();
       delay(1000 / 5);
@@ -152,61 +163,75 @@ void executeCommands() {
   }
 }
 
-void checkBar() {
 
-  if (centerSensorLastValue == centerSensorValue) {
+void checkBit(int numberOfBits) {
+  if (bitPosition > -1) {
+    int index;
+
+    for (index = bitPosition; index < 8 && index < numberOfBits + bitPosition; index++) {
+      byte value = bitLastValue;
+      Serial.print("recebido:");
+      Serial.println(value);
+      byteReceived = byteReceived | value;
+      if (index < 7) {
+        byteReceived = byteReceived << 1;
+      }
+    }
+
+    Serial.print("INDEX:");
+    Serial.print(index);
+
+    if (index >= 7) {
+      numberOfBits = numberOfBits - (index - bitPosition);
+      bitPosition = -1;
+      queue.enqueue(byteReceived);
+      byteReceived = 0;
+
+      //      //------------------------TEMP------------------------------------
+      //      numberOfBits = 0; //fila de tamanho 1
+
+    } else {
+      numberOfBits = numberOfBits - (index - bitPosition);
+      bitPosition = index;
+    }
+
+    if ( numberOfBits > 0 ) {
+      checkBit(numberOfBits);
+    }
 
   } else {
-    if ((bitPosition == 0 && centerSensorValue == 1) || bitPosition != 0) {
+    bitPosition++;
+  }
+}
+
+
+void checkBar() {
+  if (bitLastValue != bitValue) {
+    if ((bitPosition == -1 && bitValue) || bitPosition > -1) {
+      Serial.print("p");
+      Serial.println(bitPosition);
+      Serial.print("B");
+      Serial.println(bitValue);
+      Serial.print("T");
+      Serial.println(bitLastValue);
       Serial.print("F");
       currentCounter = millis();
-      if (bitPosition != 0) {
-        Serial.print("C");
-        int numberOfBits = round((currentCounter - counter) / bitTime);
-        Serial.print(numberOfBits);
-        do {
-          int index;
-          for (index = bitPosition; index < 8 && index < numberOfBits + bitPosition; index++) {
-            byte value = (centerSensorLastValue == 1);
-            byteReceived = byteReceived | value;
-            if (index < 7) {
-              byteReceived = byteReceived << 1;
-            }
-          }
+      int numberOfBits = round((currentCounter - counter) / bitTime);
+      Serial.print(numberOfBits);
+      checkBit(numberOfBits);
 
-
-
-          Serial.print("INDEX:");
-          Serial.print(index);
-
-          if (index >= 7) {
-            numberOfBits = numberOfBits - (index - bitPosition);
-            bitPosition = 0;
-            Serial.println("BYTE");
-            queue.enqueue(byteReceived);
-            byteReceived = 0;
-            //------------------------TEMP------------------------------------
-            numberOfBits = 0; //fila de tamanho 1
-
-          } else {
-            numberOfBits = numberOfBits - (index - bitPosition);
-            bitPosition = index;
-          }
-        } while ((bitPosition + 1) + numberOfBits > 8);
-      } else {
-        //byteReceived=byteReceived|1;
-        bitPosition++;
-      }
-
-      counter = currentCounter;
+    } else {
+      bitPosition++;
     }
+    counter = currentCounter;
   }
-  centerSensorLastValue = centerSensorValue;
+  bitLastValue = bitValue;
+  bitFirstValue = false;
 }
 
 void checkBitTime() {
-  if (centerSensorLastValue != centerSensorValue) {
-    if (centerSensorValue == 1) {
+  if (bitLastValue != bitValue || bitFirstValue) {
+    if (bitValue) {
       counter = millis();
     } else {
       bitTime = counter;
@@ -216,90 +241,61 @@ void checkBitTime() {
       Serial.println(bitTime);
     }
   }
-  centerSensorLastValue = centerSensorValue;
+//  Serial.print("B");
+//  Serial.println(bitValue);
+//  Serial.print("T");
+//  Serial.println(bitLastValue);
+  bitLastValue = bitValue;
+  bitFirstValue = false;
 }
 
 void setup() {
   Serial.begin(serialBaudRate);
   //Define os pinos como saida
   pinMode(LED_BUILTIN, OUTPUT);
+  Serial.println("START");
 }
 
 void loop() {
   leftSensorValue = digitalRead(leftSensorPin);
   centerSensorValue = digitalRead(centerSensorPin);
   rightSensorValue = digitalRead(rightSensorPin);
+  int total=leftSensorValue + centerSensorValue + rightSensorValue;
+  bitValue = (total > 2);
 
-  //    Serial.println("left:");
-  //    Serial.println(leftSensorValue);
-  //    Serial.println("right:");
-  //    Serial.println(rightSensorValue);
+  Serial.print("left:");
+  Serial.println(leftSensorValue);
+  Serial.print("right:");
+  Serial.println(rightSensorValue);
 
-  if (bitTime < 100) {
-    checkBitTime();
-  } else {
-    checkBar();
-  }
-  if (leftSensorValue == 1 && rightSensorValue == 1) {
-    //ok
-    goLeft = false;
-    goRight = false;
-    warning = false;
-    error = false;
-  }
-
-  if (leftSensorValue == 0 && rightSensorValue == 1) {
-    goLeft = true;
-    goRight = false;
-    warning = false;
-    error = false;
-  }
-
-  if (leftSensorValue == 1 && rightSensorValue == 0) {
+  if (leftSensorValue == 0 && rightSensorValue == 1) {//W?B
     goLeft = false;
     goRight = true;
     warning = false;
     error = false;
   }
 
-  if (leftSensorValue == 0 && rightSensorValue == 0) {
-    if (goLeft) {
-      if (!warning) {
-        errorNumber = errorChecker;
-      }
-      warning = true;
-    }
+  if (leftSensorValue == 1 && rightSensorValue == 0) {//B?W
+    goLeft = false;
+    goRight = true;
+    warning = false;
+    error = false;
+  }
 
-    if (goRight) {
-      if (!warning) {
-        errorNumber = errorChecker;
-      }
+  if (leftSensorValue == 0 && rightSensorValue == 0 && centerSensorValue == 0) {//WWW
+    if (goLeft || goRight) {
       warning = true;
-    }
-
-    if ((goRight && goLeft) || (!goRight && !goLeft)) {
+    } else {
       error = true;
     }
   }
 
-  if (!goRight && !goLeft) {
-    motor.runForward();
-  }
-
-  if (goRight && !goLeft) {
-    if (!warning) {
-      motor.runForwardRight();
-    } else {
-      motor.turnRight();
-    }
-  }
-
-  if (!goRight && goLeft) {
-    if (!warning) {
-      motor.runForwardLeft();
-    } else {
-      motor.turnLeft();
-    }
+  if (centerSensorValue == 1 && !goRight && !goLeft) {
+    //ok
+    goLeft = false;
+    goRight = false;
+    warning = false;
+    error = false;
   }
 
   if (error) {
@@ -317,6 +313,38 @@ void loop() {
       error = true;
     }
   }
+
+  if (!goRight && !goLeft && !warning && !error) {
+    //Serial.println("RUN!");
+    motor.runForward();
+  }
+
+  if (goRight && !goLeft && !error) {
+//    if (!warning) {
+//      motor.runForwardRight(motor.getIntensity(100));
+//    } else {
+//      motor.turnRight();
+//    }
+    motor.turnRight();
+  }
+
+  if (!goRight && goLeft && !error) {
+//    if (!warning) {
+//      motor.runForwardLeft(motor.getIntensity(100));
+//    } else {
+//      motor.turnLeft();
+//    }
+    motor.turnLeft();
+  }
+
+  if (!warning && !error && (total==1||total==3) ) {
+    if (bitTime < 50) {
+      checkBitTime();
+    } else {
+      checkBar();
+    }
+  }
+
   executeCommands();
 }
 
