@@ -10,7 +10,7 @@ int const motorNegativeRightPin = 4;
 int const motorSpeedRightPin = 10;
 int const motorSpeedLeftPin = 9;
 
-float intensityPercentage = 50;
+float intensityPercentage = 25;
 int percentageMax = 100;
 int intensityMax = 255;
 
