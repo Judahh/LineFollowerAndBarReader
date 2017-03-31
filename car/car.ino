@@ -3,14 +3,14 @@
 #include <math.h>
 
 //Definicoes pinos Arduino ligados a entrada da Ponte H
-int const motorNegativeLeftPin = 2;
-int const motorPositiveLeftPin = 3;
-int const motorPositiveRightPin = 5;
-int const motorNegativeRightPin = 4;
+int const motorNegativeLeftPin = 3;
+int const motorPositiveLeftPin = 2;
+int const motorPositiveRightPin = 4;
+int const motorNegativeRightPin = 5;
 int const motorSpeedRightPin = 10;
 int const motorSpeedLeftPin = 9;
 
-float intensityPercentage = 25;
+float intensityPercentage = 50;
 int percentageMax = 100;
 int intensityMax = 255;
 
@@ -19,7 +19,7 @@ byte intensity = intensityP * intensityMax;
 
 Motor motor(motorNegativeLeftPin, motorPositiveLeftPin, motorPositiveRightPin, motorNegativeRightPin, motorSpeedRightPin, motorSpeedLeftPin, intensity);
 
-float intensityPercentageR = 50;
+float intensityPercentageR = 70;
 
 float intensityPR = intensityPercentageR / percentageMax;
 byte intensityR = intensityPR * intensityMax;
@@ -268,10 +268,10 @@ void loop() {
   int total=leftSensorValue + centerSensorValue + rightSensorValue;
   bitValue = (total > 2);
 
-//  Serial.print("left:");
-//  Serial.println(leftSensorValue);
-//  Serial.print("right:");
-//  Serial.println(rightSensorValue);
+  Serial.print("left:");
+  Serial.println(leftSensorValue);
+  Serial.print("right:");
+  Serial.println(rightSensorValue);
 
   if (leftSensorValue == 0 && rightSensorValue == 1) {//W?B
     goLeft = false;
@@ -281,8 +281,8 @@ void loop() {
   }
 
   if (leftSensorValue == 1 && rightSensorValue == 0) {//B?W
-    goLeft = false;
-    goRight = true;
+    goLeft = true;
+    goRight = false;
     warning = false;
     error = false;
   }
@@ -295,7 +295,7 @@ void loop() {
     }
   }
 
-  if (centerSensorValue == 1 && !goRight && !goLeft) {
+  if (centerSensorValue == 1){// && !goRight && !goLeft) {
     //ok
     goLeft = false;
     goRight = false;
