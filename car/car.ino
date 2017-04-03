@@ -19,7 +19,7 @@ byte intensity = intensityP * intensityMax;
 
 Motor motor(motorNegativeLeftPin, motorPositiveLeftPin, motorPositiveRightPin, motorNegativeRightPin, motorSpeedRightPin, motorSpeedLeftPin, intensity);
 
-float intensityPercentageR = 70;
+float intensityPercentageR = intensityPercentage * 1.5;
 
 float intensityPR = intensityPercentageR / percentageMax;
 byte intensityR = intensityPR * intensityMax;
@@ -65,14 +65,17 @@ unsigned long counter = 0;
 
 int bitPosition = -1;
 
+int minBitTime = 35;
+
 QueueArray <byte> queue;
+QueueArray <bool> queueBitsFound;
 byte byteReceived = 0;
 
 void executeCommand(byte command) {
   Serial.print("Command:");
   Serial.println(command);
   switch (command) {
-    case 0b10000000:
+    case 0b00000000:
       Serial.println("DEAD!!!");
       //END
       motor.brake();
@@ -81,25 +84,25 @@ void executeCommand(byte command) {
       digitalWrite(LED_BUILTIN, HIGH);
       break;
 
-    case 0b10000001:
+    case 0b00000001:
       Serial.println("LED ON!!!");
       led = true;
       digitalWrite(LED_BUILTIN, led);
       break;
 
-    case 0b10000010:
+    case 0b00000010:
       Serial.println("LED OFF!!!");
       led = false;
       digitalWrite(LED_BUILTIN, led);
       break;
 
-    case 0b10000011:
+    case 0b00000011:
       Serial.println("LED SWITCH!!!");
       led = !led;
       digitalWrite(LED_BUILTIN, led);
       break;
 
-    case 0b10000100:
+    case 0b00000100:
       Serial.println("IF TURN!!!");
       if (led) {
         motor.runForwardRight();
@@ -109,49 +112,55 @@ void executeCommand(byte command) {
       delay(1000 / 10); //delay de 1/10 de segundo
       break;
 
-    case 0b10000101:
+    case 0b00000101:
       Serial.println("Delay 0.5s!!!");
       delay(1000 / 2);
       break;
 
-    case 0b10000110:
+    case 0b00000110:
       Serial.println("Delay 1s!!!");
       delay(1000);
       break;
 
-    case 0b10000111:
+    case 0b00000111:
       Serial.println("Delay 10s!!!");
       delay(10000);
       break;
 
-    case 0b10001000:
+    case 0b00001000:
       Serial.println("Turn Left!!!");
-      motor.turnLeft();
+      motor.turnLeft(intensityR);
       delay(1000 / 10);
       break;
 
-    case 0b10001001:
+    case 0b00001001:
       Serial.println("Turn Right!!!");
-      motor.turnRight();
+      motor.turnRight(intensityR);
       delay(1000 / 10);
       break;
 
-    case 0b10001010:
+    case 0b00001010:
       Serial.println("Run Forward!!!");
       motor.runForward();
       delay(1000 / 5);
       break;
 
-    case 0b10001011:
+    case 0b00001011:
       Serial.println("brake!!!");
       motor.brake();
       delay(1000 / 5);
       break;
 
-    case 0b10001100:
+    case 0b00001100:
       Serial.println("Run Backwards!!!");
       motor.runBackwards();
       delay(1000 / 5);
+      break;
+
+    case 0b10000000:
+      Serial.println("Turn Right!!!");
+      motor.turnRight(intensityR);
+      delay(1000 / 10);
       break;
 
     default:
@@ -168,90 +177,70 @@ void executeCommands() {
   }
 }
 
-
-void checkBit(int numberOfBits) {
-  if (bitPosition > -1) {
-    int index;
-
-    for (index = bitPosition; index < 8 && index < numberOfBits + bitPosition; index++) {
-      byte value = bitLastValue;
-//      Serial.print("recebido:");
-//      Serial.println(value);
-      byteReceived = byteReceived | value;
-      if (index < 7) {
-        byteReceived = byteReceived << 1;
+void checkBits() {
+  while (queueBitsFound.count()>0) {
+    bool newBit=queueBitsFound.dequeue();
+    if(bitPosition==-1){
+      if(newBit){
+        Serial.println("P++");
+        bitPosition++;
+      }
+    }else{
+      if(bitPosition<8){
+        Serial.print("recebido:");
+        Serial.println((int)newBit);
+        byteReceived = byteReceived | newBit;
+        if (bitPosition < 7) {
+          byteReceived = byteReceived << 1;
+        }
+        bitPosition++;
+      }else{
+        queue.enqueue(byteReceived);
+        bitPosition=-1;
       }
     }
-
-//    Serial.print("INDEX:");
-//    Serial.print(index);
-
-    if (index >= 7) {
-      numberOfBits = numberOfBits - (index - bitPosition);
-      bitPosition = -1;
-      queue.enqueue(byteReceived);
-      byteReceived = 0;
-
-      //      //------------------------TEMP------------------------------------
-      //      numberOfBits = 0; //fila de tamanho 1
-
-    } else {
-      numberOfBits = numberOfBits - (index - bitPosition);
-      bitPosition = index;
-    }
-
-    if ( numberOfBits > 0 ) {
-      checkBit(numberOfBits);
-    }
-
-  } else {
-    bitPosition++;
   }
 }
 
-
 void checkBar() {
   if (bitLastValue != bitValue) {
-    if ((bitPosition == -1 && bitValue) || bitPosition > -1) {
-//      Serial.print("p");
-//      Serial.println(bitPosition);
-//      Serial.print("B");
-//      Serial.println(bitValue);
-//      Serial.print("T");
-//      Serial.println(bitLastValue);
-//      Serial.print("F");
-      currentCounter = millis();
-      int numberOfBits = round((currentCounter - counter) / bitTime);
-//      Serial.print(numberOfBits);
-      checkBit(numberOfBits);
-
-    } else {
-      bitPosition++;
+    currentCounter = millis();
+    int currentBitTime = currentCounter - counter;
+    Serial.print(bitValue);
+    Serial.print(",");
+    Serial.print(bitLastValue);
+    Serial.print(",");
+    Serial.println(currentBitTime);
+    int numberOfBits = round(currentBitTime / bitTime);
+    for(int index = 0; index < numberOfBits; index++){
+      queueBitsFound.enqueue(bitLastValue);
+      //Serial.print(bitLastValue);
+    }
+    if(!queueBitsFound.isEmpty()){
+      checkBits();
     }
     counter = currentCounter;
   }
   bitLastValue = bitValue;
-  bitFirstValue = false;
 }
 
 void checkBitTime() {
-  if (bitLastValue != bitValue || bitFirstValue) {
-    if (bitValue) {
-      counter = millis();
-    } else {
-      bitTime = counter;
-      counter = millis();
-      bitTime = counter - bitTime;
-      Serial.print("bitTime:");
-      Serial.println(bitTime);
+  if (bitLastValue != bitValue) {
+    currentCounter = millis();
+//    if(bitFirstValue){
+//      bitFirstValue = false;
+//    }
+    if(bitLastValue && !bitValue){
+      bitTime = currentCounter - counter;
+      if(bitTime>=minBitTime){
+        bitTime=bitTime-20;
+        Serial.print("bitTime:");
+        Serial.println(bitTime);
+      }
     }
+    counter = currentCounter;
   }
-//  Serial.print("B");
-//  Serial.println(bitValue);
-//  Serial.print("T");
-//  Serial.println(bitLastValue);
   bitLastValue = bitValue;
-  bitFirstValue = false;
 }
 
 void setup() {
@@ -268,10 +257,10 @@ void loop() {
   int total=leftSensorValue + centerSensorValue + rightSensorValue;
   bitValue = (total > 2);
 
-  Serial.print("left:");
-  Serial.println(leftSensorValue);
-  Serial.print("right:");
-  Serial.println(rightSensorValue);
+//  Serial.print("left:");
+//  Serial.println(leftSensorValue);
+//  Serial.print("right:");
+//  Serial.println(rightSensorValue);
 
   if (leftSensorValue == 0 && rightSensorValue == 1) {//W?B
     goLeft = false;
@@ -343,7 +332,7 @@ void loop() {
   }
 
   if (!warning && !error && (total>0) ) {
-    if (bitTime < 50) {
+    if (bitTime < minBitTime) {
       checkBitTime();
     } else {
       checkBar();
