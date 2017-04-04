@@ -180,15 +180,15 @@ void executeCommands() {
 }
 
 void checkBits() {
-  while (queueBitsFound.count()>0) {
-    bool newBit=queueBitsFound.dequeue();
-    if(bitPosition==-1){
-      if(newBit){
+  while (queueBitsFound.count() > 0) {
+    bool newBit = queueBitsFound.dequeue();
+    if (bitPosition == -1) {
+      if (newBit) {
         Serial.println("P++");
         bitPosition++;
       }
-    }else{
-      if(bitPosition<8){
+    } else {
+      if (bitPosition < 8) {
         Serial.print("recebido:");
         Serial.println((int)newBit);
         byteReceived = byteReceived | newBit;
@@ -196,9 +196,9 @@ void checkBits() {
           byteReceived = byteReceived << 1;
         }
         bitPosition++;
-      }else{
+      } else {
         queue.enqueue(byteReceived);
-        bitPosition=-1;
+        bitPosition = -1;
       }
     }
   }
@@ -214,11 +214,11 @@ void checkBar() {
     Serial.print(",");
     Serial.println(currentBitTime);
     int numberOfBits = round(currentBitTime / bitTime);
-    for(int index = 0; index < numberOfBits; index++){
+    for (int index = 0; index < numberOfBits; index++) {
       queueBitsFound.enqueue(bitLastValue);
       //Serial.print(bitLastValue);
     }
-    if(!queueBitsFound.isEmpty()){
+    if (!queueBitsFound.isEmpty()) {
       checkBits();
     }
     counter = currentCounter;
@@ -229,13 +229,13 @@ void checkBar() {
 void checkBitTime() {
   if (bitLastValue != bitValue) {
     currentCounter = millis();
-//    if(bitFirstValue){
-//      bitFirstValue = false;
-//    }
-    if(bitLastValue && !bitValue){
+    //    if(bitFirstValue){
+    //      bitFirstValue = false;
+    //    }
+    if (bitLastValue && !bitValue) {
       bitTime = currentCounter - counter;
-      if(bitTime>=minBitTime){
-        bitTime=bitTime-20;
+      if (bitTime >= minBitTime) {
+        bitTime = bitTime - 20;
         Serial.print("bitTime:");
         Serial.println(bitTime);
       }
@@ -257,13 +257,13 @@ void loop() {
   leftSensorValue = digitalRead(leftSensorPin);
   centerSensorValue = digitalRead(centerSensorPin);
   rightSensorValue = digitalRead(rightSensorPin);
-  int total=leftSensorValue + centerSensorValue + rightSensorValue;
+  int total = leftSensorValue + centerSensorValue + rightSensorValue;
   bitValue = (total > 2);
 
-//  Serial.print("left:");
-//  Serial.println(leftSensorValue);
-//  Serial.print("right:");
-//  Serial.println(rightSensorValue);
+  //  Serial.print("left:");
+  //  Serial.println(leftSensorValue);
+  //  Serial.print("right:");
+  //  Serial.println(rightSensorValue);
 
   if (leftSensorValue == 0 && rightSensorValue == 1) {//W?B
     goLeft = false;
@@ -287,7 +287,7 @@ void loop() {
     }
   }
 
-  if (centerSensorValue == 1){// && !goRight && !goLeft) {
+  if (centerSensorValue == 1) { // && !goRight && !goLeft) {
     //ok
     goLeft = false;
     goRight = false;
@@ -317,24 +317,24 @@ void loop() {
   }
 
   if (goRight && !goLeft && !error) {
-//    if (!warning) {
-//      motor.runForwardRight(motor.getIntensity(100));
-//    } else {
-//      motor.turnRight();
-//    }
+    //    if (!warning) {
+    //      motor.runForwardRight(motor.getIntensity(100));
+    //    } else {
+    //      motor.turnRight();
+    //    }
     motor.turnRight(intensityR);
   }
 
   if (!goRight && goLeft && !error) {
-//    if (!warning) {
-//      motor.runForwardLeft(motor.getIntensity(100));
-//    } else {
-//      motor.turnLeft();
-//    }
+    //    if (!warning) {
+    //      motor.runForwardLeft(motor.getIntensity(100));
+    //    } else {
+    //      motor.turnLeft();
+    //    }
     motor.turnLeft(intensityR);
   }
 
-  if (!warning && !error && (total>0) ) {
+  if (!warning && !error && (total > 0) ) {
     if (bitTime < minBitTime) {
       checkBitTime();
     } else {
