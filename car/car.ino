@@ -114,16 +114,19 @@ void executeCommand(byte command) {
 
     case 0b00000101:
       Serial.println("Delay 0.5s!!!");
+      motor.neutral();
       delay(1000 / 2);
       break;
 
     case 0b00000110:
       Serial.println("Delay 1s!!!");
+      motor.neutral();
       delay(1000);
       break;
 
     case 0b00000111:
       Serial.println("Delay 10s!!!");
+      motor.neutral();
       delay(10000);
       break;
 
@@ -247,6 +250,7 @@ void setup() {
   Serial.begin(serialBaudRate);
   //Define os pinos como saida
   pinMode(LED_BUILTIN, OUTPUT);
+  Serial.println(" ");
   Serial.println("START");
 }
 
