@@ -3,16 +3,16 @@
 #include <math.h>
 
 //Definicoes pinos Arduino ligados a entrada da Ponte H
-int const motorNegativeLeftPin = 3;
-int const motorPositiveLeftPin = 2;
-int const motorPositiveRightPin = 4;
-int const motorNegativeRightPin = 5;
-int const motorSpeedRightPin = 10;
-int const motorSpeedLeftPin = 9;
+unsigned int const motorNegativeLeftPin = 3;
+unsigned int const motorPositiveLeftPin = 2;
+unsigned int const motorPositiveRightPin = 4;
+unsigned int const motorNegativeRightPin = 5;
+unsigned int const motorSpeedRightPin = 10;
+unsigned int const motorSpeedLeftPin = 9;
 
 float intensityPercentage = 50;
-int percentageMax = 100;
-int intensityMax = 255;
+unsigned int percentageMax = 100;
+unsigned int intensityMax = 255;
 
 float intensityP = intensityPercentage / percentageMax;
 byte intensity = intensityP * intensityMax;
@@ -24,14 +24,14 @@ float intensityPercentageR = intensityPercentage * 1.5;
 float intensityPR = intensityPercentageR / percentageMax;
 byte intensityR = intensityPR * intensityMax;
 
-int const leftSensorPin = 6;
-int const centerSensorPin = 7;
-int const rightSensorPin = 8;
+unsigned int const leftSensorPin = 6;
+unsigned int const centerSensorPin = 7;
+unsigned int const rightSensorPin = 8;
 
-int const serialBaudRate = 9600;
+unsigned int const serialBaudRate = 9600;
 
-int const numberOfSamples = 10;
-int const sampleDelay = 100;
+unsigned int const numberOfSamples = 10;
+unsigned int const sampleDelay = 100;
 
 bool bitValue = false;
 bool bitLastValue = false;
@@ -55,17 +55,16 @@ bool error = false;
 bool led = false;
 bool finish = false;
 
-int errorChecker = 10;
-int errorNumber = 0;
+unsigned int errorChecker = 10;
+unsigned int errorNumber = 0;
 
 unsigned long bitTime = 0;
+unsigned long minBitTime = 35;
 
 unsigned long currentCounter = 0;
 unsigned long counter = 0;
 
 int bitPosition = -1;
-
-int minBitTime = 35;
 
 QueueArray <byte> queue;
 QueueArray <bool> queueBitsFound;
