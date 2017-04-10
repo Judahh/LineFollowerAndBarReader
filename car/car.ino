@@ -64,6 +64,9 @@ unsigned long minBitTime = 35;
 unsigned long currentCounter = 0;
 unsigned long counter = 0;
 
+byte number = 0;
+bool numberOn = false;
+
 int bitPosition = -1;
 
 QueueArray <byte> queue;
@@ -160,9 +163,8 @@ void executeCommand(byte command) {
       break;
 
     case 0b10000000:
-      Serial.println("Turn Right!!!");
-      motor.turnRight(intensityR);
-      delay(1000 / 10);
+      Serial.println("Get Number!!!");
+      numberOn=true;
       break;
 
     default:
@@ -172,10 +174,20 @@ void executeCommand(byte command) {
   while (finish) {}
 }
 
+void getNumber(byte command){
+  number = command;
+  numberOn = false;
+}
+
 void executeCommands() {
   while (!queue.isEmpty()) {
     Serial.println("Command FOUND!!!");
-    executeCommand(queue.dequeue());
+    if(numberOn){
+      getNumber(queue.dequeue())
+    }else{
+      executeCommand(queue.dequeue());
+    }
+    
   }
 }
 
