@@ -183,7 +183,7 @@ void executeCommands() {
   while (!queue.isEmpty()) {
     Serial.println("Command FOUND!!!");
     if(numberOn){
-      getNumber(queue.dequeue())
+      getNumber(queue.dequeue());
     }else{
       executeCommand(queue.dequeue());
     }
@@ -247,7 +247,7 @@ void checkBitTime() {
     if (bitLastValue && !bitValue) {
       bitTime = currentCounter - counter;
       if (bitTime >= minBitTime) {
-        bitTime = bitTime - 20;
+        bitTime = bitTime;// - 20;
         Serial.print("bitTime:");
         Serial.println(bitTime);
       }
